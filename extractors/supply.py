@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from contract_loader import get_contract
+from contract_loader import get_block_timestamp, get_contract
 from config import CHAINS
 
 
@@ -55,11 +55,14 @@ def fetch_supply_events(
         to_block=to_block,
     )
 
+    block_cache: dict[int, int] = {}
     events_with_timestamp = []
     for raw_event in raw_events:
         event_dict = dict(raw_event)
-        block = w3.eth.get_block(event_dict["blockNumber"])
-        timestamp = block["timestamp"]
+        block_number = event_dict["blockNumber"]
+        if block_number not in block_cache:
+            block_cache[block_number] = get_block_timestamp(w3, block_number)
+        timestamp = block_cache[block_number]
         event_dict["block_timestamp"] = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
         events_with_timestamp.append(event_dict)
 
