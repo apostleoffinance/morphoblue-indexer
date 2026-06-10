@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from contract_loader import get_block_timestamp, get_contract
@@ -63,7 +63,7 @@ def fetch_supply_events(
         if block_number not in block_cache:
             block_cache[block_number] = get_block_timestamp(w3, block_number)
         timestamp = block_cache[block_number]
-        event_dict["block_timestamp"] = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+        event_dict["block_timestamp"] = datetime.fromtimestamp(timestamp, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         events_with_timestamp.append(event_dict)
 
     return events_with_timestamp

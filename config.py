@@ -8,7 +8,7 @@ load_dotenv()
 INFURA_RPC = os.getenv("MM_INFURA_URL")
 ALCHEMY_RPC = os.getenv("MM_ALCHEMY_URL") or os.getenv("MM_AlCHEMY_URL")
 BASE_RPC = os.getenv("BASE_RPC", "https://mainnet.base.org")
-ARBITRUM_RPC = os.getenv("ARBITRUM_RPC", "https://arb1.arbitrum.io/rpc")
+ARBITRUM_RPC = os.getenv("ARBITRUM_RPC") or os.getenv("ARBITRUM_RPC")
 
 
 def _compact(*urls):
