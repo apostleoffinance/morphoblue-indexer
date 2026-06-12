@@ -1,0 +1,21 @@
+version: 2
+
+sources:
+
+  - name: morpho
+
+    schema: public
+
+    tables:
+
+      - name: supply_events_enriched
+
+      - name: borrow_events_enriched
+
+      - name: repay_events_enriched
+
+      - name: withdraw_events_enriched
+
+      - name: market_lookup
+
+      - name: token_lookup
