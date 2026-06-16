@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: fact_concentration_risk
+    description: Supplier concentration risk metrics per market for Morpho Blue Len forensic analytics.
+    columns:
+      - name: market_id
+        tests:
+          - not_null
+      - name: chain
+        tests:
+          - not_null
+      - name: loan_symbol
+        tests:
+          - not_null
+      - name: total_supply
+        tests:
+          - not_null
+      - name: unique_suppliers
+        tests:
+          - not_null
+
+  - name: fact_credit_risk
+    description: Borrow and repayment risk metrics per market.
+    columns:
+      - name: market_id
+        tests:
+          - not_null
+      - name: chain
+        tests:
+          - not_null
+      - name: loan_symbol
+        tests:
+          - not_null
+      - name: total_borrow
+        tests:
+          - not_null
+      - name: total_repay
+        tests:
+          - not_null
+      - name: outstanding_borrow
+        tests:
+          - not_null
+
+  - name: fact_liquidity_risk
+    description: Supply withdrawal and net liquidity risk metrics per market.
+    columns:
+      - name: market_id
+        tests:
+          - not_null
+      - name: chain
+        tests:
+          - not_null
+      - name: loan_symbol
+        tests:
+          - not_null
+      - name: total_supply
+        tests:
+          - not_null
+      - name: total_withdraw
+        tests:
+          - not_null
+      - name: net_liquidity
+        tests:
+          - not_null

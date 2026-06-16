@@ -1,0 +1,7 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$METABASE_DOMAIN} {
+	reverse_proxy metabase:3000
+}

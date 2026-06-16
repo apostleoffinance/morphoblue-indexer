@@ -1,0 +1,29 @@
+version: 2
+
+sources:
+
+  - name: morpho
+    description: Raw Morpho Blue pipeline tables loaded from enriched CSV extracts.
+    schema: public
+
+    tables:
+      - name: supply_events_enriched
+        description: Supply events joined with market and token metadata.
+
+      - name: borrow_events_enriched
+        description: Borrow events joined with market and token metadata.
+
+      - name: repay_events_enriched
+        description: Repay events joined with market and token metadata.
+
+      - name: withdraw_events_enriched
+        description: Withdraw events joined with market and token metadata.
+
+      - name: market_lookup
+        description: On-chain Morpho market parameters keyed by market_id.
+
+      - name: token_lookup
+        description: ERC20 token metadata keyed by token address.
+
+      - name: token_prices
+        description: USD prices for pipeline tokens (CoinGecko primary, DefiLlama fallback).

@@ -1,270 +1,290 @@
 # Morpho Blue Len
 
-## Project Overview
+**Status: complete.** Multi-chain Morpho Blue analytics pipeline — extract, enrich, warehouse, dbt marts. Results are shared via **screenshots** in the docs; run Metabase locally to explore, or use the optional API.
 
-`Morpho Blue Len` is a multi-chain data pipeline for monitoring utilization, liquidity, concentration, and risk metrics across Morpho Blue markets.
+📄 **[Full project report →](docs/morpho_blue_pipeline.md)** (includes Prefect, Metabase, and API screenshots)
 
-The pipeline extracts on-chain events, resolves market and token metadata, normalizes raw amounts into human-readable values, and exports structured CSV output for analytics.
+---
 
-## Pipeline
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph OnChain["On-chain"]
+        MB[Morpho Blue]
+    end
+
+    subgraph Pipeline["Python pipeline"]
+        EV[Event extraction]
+        MK[Market + token lookup]
+        PR[USD pricing]
+        EN[Enrichment + validation]
+    end
+
+    subgraph Orchestration["Orchestration"]
+        PF[Prefect — 9 tasks]
+    end
+
+    subgraph Analytics["Analytics layer"]
+        PG[(PostgreSQL)]
+        DBT[dbt marts]
+        MBT[Metabase]
+        API[FastAPI]
+    end
+
+    MB --> EV --> MK --> PR --> EN --> PF --> PG --> DBT
+    DBT --> MBT
+    DBT --> API
+```
+
+**Consumption:** Screenshots in `docs/` for reviewers · Metabase on localhost for ad-hoc exploration · FastAPI optional
+
+---
+
+## Screenshots
+
+Pipeline outputs are documented with screenshots — no custom Metabase dashboard build required. Anyone reviewing the project can see results here; clone and run locally only if you want to explore live data.
+
+### Prefect — orchestrated pipeline run
+
+![Prefect pipeline run](docs/assets/prefect-run.png)
+
+9 tasks: extract → markets → tokens → prices → enrich → validate → load Postgres → dbt run → dbt test.
+
+### Metabase — local exploration (`http://localhost:3000`)
+
+![Metabase exploration](docs/assets/metabase-dashboard.png)
+
+After `docker compose up -d` and a pipeline run, open Metabase and connect to Postgres (`host: postgres`, port `5432` inside Docker). Use **Browse data** → pick a table (e.g. `borrow_events_enriched`) → **X-ray** for instant charts. No saved dashboard needed.
+
+Example local URL (table ID varies per install):
 
 ```text
-RPC
- ↓
-Event Decoding (Supply, Borrow, Repay, Withdraw)
- ↓
-Market Resolution (union of all event market_ids)
- ↓
-Token Resolution (ERC20 symbol, name, decimals)
- ↓
-Enrichment (join + normalized_assets)
- ↓
-Validation
+http://localhost:3000/auto/dashboard/table/<id>
 ```
 
-### Fact tables
+### FastAPI — Swagger UI
 
-| File | Description |
-|------|-------------|
-| `data/supply_events.csv` | Supply events |
-| `data/borrow_events.csv` | Borrow events |
-| `data/repay_events.csv` | Repay events |
-| `data/withdraw_events.csv` | Withdraw events |
-| `data/*_events_enriched.csv` | Fact tables joined with market/token dimensions and `normalized_assets` |
-
-### Dimension tables
-
-| File | Description |
-|------|-------------|
-| `data/market_lookup.csv` | `market_id` → loan/collateral tokens, oracle, IRM, LLTV |
-| `data/token_lookup.csv` | Token address → symbol, name, decimals |
-
-## What it does today
-
-- loads chain configuration from `config.py`
-- creates a Web3 contract instance via `contract_loader.py`
-- reads Morpho Blue `Supply`, `Borrow`, `Repay`, and `Withdraw` events via extractor modules
-- enriches each event with block timestamp and normalized market identifiers
-- resolves market parameters on-chain from the union of all event `market_id` values
-- resolves ERC20 token metadata (`symbol`, `name`, `decimals`) with graceful failure handling
-- joins events with market and token dimensions and computes `normalized_assets`
-- validates block ranges, market coverage, and enriched/base row parity
-- exports all output to `data/*.csv` through `main.py` (extractors do not write CSVs)
-
-## Key Features
-
-- multi-chain support via environment-configured RPC endpoints, including Infura and Alchemy fallbacks
-- reusable contract loader for ABI-based contract decoding
-- normalized event output across `Supply`, `Borrow`, `Repay`, and `Withdraw`
-- timestamp enrichment with block-level caching to avoid redundant RPC calls
-- market resolution from all event types (not supply-only), avoiding missing joins on borrow-only markets
-- token dimension table with zero-address exclusion and nullable integer decimals
-- amount normalization via `Decimal` to avoid float precision issues (e.g. `50000.0` not `49999.99999999999`)
-- post-pipeline validation for consistency checks
-
-## Project Structure
-
-- `main.py` — CLI orchestrator; all CSV read/write happens here
-- `config.py` — chain settings, RPC endpoints, and Morpho contract addresses
-- `contract_loader.py` — loads the Morpho Blue ABI and initializes `Web3` for a selected chain
-- `extractors/supply.py` — fetches and normalizes `Supply` events
-- `extractors/borrow.py` — fetches and normalizes `Borrow` events
-- `extractors/repay.py` — fetches and normalizes `Repay` events
-- `extractors/withdraw.py` — fetches and normalizes `Withdraw` events
-- `extractors/market_lookup.py` — resolves `market_id` → market params on-chain
-- `extractors/token_lookup.py` — resolves token address → ERC20 metadata on-chain
-- `extractors/enrich.py` — joins events with market/token dimensions and normalizes amounts
-- `extractors/validate.py` — checks block ranges, market coverage, and enriched parity
-- `abi/morpho_blue.json` — Morpho Blue contract ABI
-- `abi/erc20.json` — minimal ERC20 ABI (`symbol`, `name`, `decimals`)
-- `data/` — generated output CSV files
-
-## Setup
-
-1. Create a `.env` file with your RPC endpoints:
+![API Swagger UI](docs/assets/api-swagger.png)
 
 ```bash
-MM_INFURA_URL=https://mainnet.infura.io/v3/<your-key>
-MM_ALCHEMY_URL=https://eth-mainnet.g.alchemy.com/v2/<your-key>
+uv run uvicorn api.main:app --reload --port 8000
+# → http://localhost:8000/docs
 ```
 
-2. Install dependencies (Python ≥ 3.12):
+---
+
+## Project structure
+
+```text
+decoded_logs/
+├── main.py                 # CLI orchestrator
+├── config.py               # chains, RPCs, GECKO_API_KEY
+├── extractors/             # supply, borrow, repay, withdraw, market, token, price, enrich, validate
+├── database/               # Postgres schema + CSV loader
+├── flows/                  # Prefect daily pipeline
+├── morpho_analytics/       # dbt (staging → facts → risk → metabase marts)
+├── api/                    # FastAPI (protocol, metrics, markets)
+├── docker-compose.yml      # Postgres + Metabase
+├── docs/                   # project report + screenshots
+└── data/                   # generated CSVs
+```
+
+| Path | Role |
+|------|------|
+| `flows/daily_pipeline.py` | Prefect flow entry point |
+| `morpho_analytics/models/marts/metabase/` | Dashboard-ready tables |
+| `api/` | Read-only REST API over dbt marts |
+
+---
+
+## Quick start
 
 ```bash
 uv sync
+docker compose up -d
+
+# Full pipeline
+export PREFECT_API_URL=http://127.0.0.1:4200/api   # optional
+uv run python -m flows.daily_pipeline
+
+# Explore locally (optional)
+open http://localhost:3000     # Metabase — Browse data / X-ray
+open http://localhost:8000/docs # API — after: uv run uvicorn api.main:app --reload
 ```
 
-## Usage
-
-Run all commands from the repo root.
-
-### Full pipeline (single chain)
+### Environment (`.env`)
 
 ```bash
-# 1. Extract all events (same block window)
-python main.py --event all --chain ethereum --from-block 22800000 --to-block 22801000
-
-# 2. Resolve markets (union of supply + borrow + repay + withdraw market_ids)
-python main.py --event market --chain ethereum
-
-# 3. Resolve tokens from market loan/collateral addresses
-python main.py --event token --chain ethereum
-
-# 4. Enrich each event file
-python main.py --event enrich --input data/supply_events.csv
-python main.py --event enrich --input data/borrow_events.csv
-python main.py --event enrich --input data/repay_events.csv
-python main.py --event enrich --input data/withdraw_events.csv
-
-# 5. Validate consistency
-python main.py --event validate --chain ethereum --from-block 22800000 --to-block 22801000
+MM_INFURA_URL=https://mainnet.infura.io/v3/<key>
+MM_ALCHEMY_URL=https://eth-mainnet.g.alchemy.com/v2/<key>
+ARBITRUM_RPC=https://arb-mainnet.g.alchemy.com/v2/<key>
+GECKO_API_KEY=<coingecko-pro-key>
 ```
 
-### Multi-chain
+| Variable | Purpose |
+|----------|---------|
+| `FROM_BLOCK` / `TO_BLOCK` | Extraction block range |
+| `PIPELINE_CHAINS=ethereum,base` | Chains to process |
+| `SKIP_EXTRACT=1` | Load + dbt only (skip RPC extract) |
 
-`--chain` accepts one or more chains, or `all`. Output CSVs include a `chain` column; re-running a chain replaces that chain's rows in the existing files.
+Default block range when unset: `22800000–22801000`.
 
-```bash
-# All configured chains, same block range (only valid if heights align)
-python main.py --event all --chain all --from-block 22800000 --to-block 22801000
+---
 
-# Multiple chains explicitly
-python main.py --event all --chain ethereum base --from-block 22800000 --to-block 22801000
+## Sample outputs
 
-# Per-chain block ranges (recommended)
-python main.py --event all --chain ethereum base arbitrum \
-  --block-range ethereum:22800000-22801000 \
-  --block-range base:25000000-25001000 \
-  --block-range arbitrum:250000000-250010000
+### Event extraction (default Ethereum window)
 
-# Resolve dimensions for all chains present in event CSVs
-python main.py --event market --chain all
-python main.py --event token --chain all
+| Event | CSV | Rows |
+|-------|-----|------|
+| Supply | `data/supply_events.csv` | 160 |
+| Borrow | `data/borrow_events.csv` | 20 |
+| Repay | `data/repay_events.csv` | 22 |
+| Withdraw | `data/withdraw_events.csv` | 172 |
 
-# Validate per chain
-python main.py --event validate --chain ethereum base \
-  --block-range ethereum:22800000-22801000 \
-  --block-range base:25000000-25001000
+### Enriched columns (added by `--event enrich`)
+
+| Column | Description |
+|--------|-------------|
+| `loan_symbol`, `collateral_symbol` | Token tickers |
+| `normalized_assets` | Amount in loan token units |
+| `price_usd` | Token price at lookup |
+| `amount_usd` | `normalized_assets × price_usd` |
+
+### API — `GET /protocol/summary`
+
+```json
+{
+  "market_count": 93,
+  "total_supply_usd": 44320227.14,
+  "total_borrow_usd": 19472253.66,
+  "outstanding_borrow_usd": 18989932.55
+}
 ```
 
-Supported chains: `ethereum`, `base`, `arbitrum` (see `config.py`).
+### dbt marts (Postgres)
 
-### Extract events
+| Model | Use |
+|-------|-----|
+| `fact_market_activity` | Per-market supply/borrow/repay/withdraw + USD |
+| `mart_supply_activity` | Supply by asset (query or API) |
+| `mart_borrow_activity` | Borrow by asset |
+| `mart_supplier_totals` | Per-wallet supply totals |
+| `mart_borrower_totals` | Per-wallet borrow totals |
+| `fact_concentration_risk` | Supplier concentration |
+| `fact_credit_risk` | Repayment / outstanding borrow |
+| `fact_liquidity_risk` | Net liquidity flow |
 
-Generate all event CSVs in one run (recommended for consistent block coverage):
+---
 
-```bash
-python main.py --event all --chain ethereum --from-block 22800000 --to-block 22801000
-```
-
-Generate one event type at a time:
-
-```bash
-python main.py --event supply   --chain ethereum --from-block 22800000 --to-block 22801000
-python main.py --event borrow   --chain ethereum --from-block 22800000 --to-block 22801000
-python main.py --event repay    --chain ethereum --from-block 22800000 --to-block 22801000
-python main.py --event withdraw --chain ethereum --from-block 22800000 --to-block 22801000
-```
-
-Custom output path:
-
-```bash
-python main.py --event repay --chain ethereum --from-block 22800000 --to-block 22801000 --output data/my_repay.csv
-```
-
-### Market and token lookup
-
-```bash
-# Default: unions market_ids from all four event CSVs in data/
-python main.py --event market --chain ethereum
-
-# Custom event inputs (comma-separated)
-python main.py --event market --chain ethereum --input data/supply_events.csv,data/borrow_events.csv
-
-# Resolve ERC20 metadata for all tokens in market_lookup.csv
-python main.py --event token --chain ethereum
-```
-
-### Enrichment
-
-Joins each event file with `market_lookup.csv` and `token_lookup.csv`, adding:
-
-- `loan_token`, `collateral_token`
-- `loan_symbol`, `collateral_symbol`
-- `loan_decimals`
-- `normalized_assets` (`assets / 10**decimals`, using `Decimal` for precision)
-
-```bash
-python main.py --event enrich --input data/supply_events.csv
-# → data/supply_events_enriched.csv
-```
-
-### Validation
-
-Checks:
-
-- block ranges fall within `--from-block` / `--to-block` (when provided)
-- every `market_id` in event files exists in `market_lookup.csv`
-- each enriched file has the same row count and `transaction_hash` order as its base file
-- warns on enriched rows with blank `loan_symbol`
-
-```bash
-python main.py --event validate --chain ethereum
-python main.py --event validate --chain ethereum --from-block 22800000 --to-block 22801000
-```
-
-Exits with code `1` on failure.
-
-## Default outputs
-
-| Step | Output |
-|------|--------|
-| supply | `data/supply_events.csv` |
-| borrow | `data/borrow_events.csv` |
-| repay | `data/repay_events.csv` |
-| withdraw | `data/withdraw_events.csv` |
-| market | `data/market_lookup.csv` |
-| token | `data/token_lookup.csv` |
-| enrich | `data/<event>_events_enriched.csv` |
-
-## Analytics examples
-
-On enriched files, `normalized_assets` is denominated in the **loan token**:
+## Example SQL
 
 ```sql
--- Total supply by token
-SELECT loan_symbol, SUM(normalized_assets)
+-- Supply by asset (USD) from enriched table
+SELECT loan_symbol, SUM(amount_usd) AS total_supply_usd
 FROM supply_events_enriched
-GROUP BY loan_symbol;
+GROUP BY loan_symbol
+ORDER BY total_supply_usd DESC;
 
--- Top borrowed assets
-SELECT loan_symbol, SUM(normalized_assets)
-FROM borrow_events_enriched
-GROUP BY loan_symbol;
+-- Market overview from dbt mart
+SELECT chain, loan_symbol, total_supply_volume_usd, outstanding_borrow_usd
+FROM fact_market_activity
+ORDER BY total_supply_volume_usd DESC;
 
--- Market view
-SELECT market_id, loan_symbol, collateral_symbol
-FROM supply_events_enriched;
+-- Top borrowers (Metabase mart)
+SELECT borrower, borrowed_usd
+FROM mart_borrower_totals
+ORDER BY borrowed_usd DESC
+LIMIT 20;
+
+-- Supplier concentration
+SELECT loan_symbol, largest_supplier_pct, top_5_supplier_pct
+FROM fact_concentration_risk
+ORDER BY largest_supplier_pct DESC;
 ```
+
+More queries in [docs/morpho_blue_pipeline.md](docs/morpho_blue_pipeline.md#6-example-sql-queries).
+
+---
+
+## Services
+
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| Metabase | http://localhost:3000 | Local exploration only; see screenshots in docs for sample output |
+| Prefect | http://127.0.0.1:4200 | — |
+| FastAPI | http://localhost:8000/docs | — |
+| Postgres (host) | `localhost:5433` | `morpho` / `morpho` / db `morpho` |
+| Postgres (Metabase) | host `postgres`, port `5432` | same credentials |
+
+### VPS deployment (Docker)
+
+Production Metabase + Postgres on a Linux VPS with HTTPS (Caddy + Let's Encrypt):
+
+```bash
+cd deploy
+cp .env.example .env   # set passwords + METABASE_DOMAIN
+./setup.sh
+```
+
+Full guide: **[deploy/README.md](deploy/README.md)**
+
+---
+
+## Manual pipeline
+
+```bash
+uv run python main.py --event all --chain ethereum --from-block 22800000 --to-block 22801000
+uv run python main.py --event market --chain ethereum
+uv run python main.py --event token --chain ethereum
+uv run python main.py --event price --chain all
+uv run python main.py --event enrich --input data/supply_events.csv
+uv run python main.py --event validate --chain ethereum --from-block 22800000 --to-block 22801000
+uv run python -m database.load_csv
+cd morpho_analytics && DBT_PROFILES_DIR=. uv run dbt run && DBT_PROFILES_DIR=. uv run dbt test
+```
+
+Supported chains: `ethereum`, `base`, `arbitrum`.
+
+---
+
+## API endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Liveness |
+| GET | `/protocol/summary` | Protocol USD KPIs |
+| GET | `/protocol/activity-by-chain` | Totals by chain |
+| GET | `/metrics/supply-by-asset` | Supply chart data |
+| GET | `/metrics/borrow-by-asset` | Borrow chart data |
+| GET | `/metrics/top-suppliers?limit=20` | Top suppliers |
+| GET | `/metrics/top-borrowers?limit=20` | Top borrowers |
+| GET | `/markets?chain=ethereum` | Market list |
+| GET | `/markets/{market_id}?chain=ethereum` | Market + risk detail |
+
+---
 
 ## Important notes
 
-- **Row counts differ across event types.** Supply, borrow, repay, and withdraw are separate events — 134 supplies and 17 borrows in the same block range is expected.
-- **Use `--event all` with one block range** so all event files cover the same window. Re-run market → token → enrich after re-extracting events.
-- **Enriched row count must match base.** Each `*_events_enriched.csv` should have one row per row in its `*_events.csv`.
-- **Market lookup uses the union of all events** so borrow-only markets are not missing from joins.
-- **Multi-chain output lives in the same CSVs**, keyed by the `chain` column. Enrichment joins on `(chain, market_id)` and `(chain, token_address)`.
-- **Zero address tokens** (`0x0000...`) are excluded from token resolution.
-- **CSV I/O lives in `main.py` only.** Extractor modules return data; the orchestrator handles pandas and file writes.
+- **Snapshot metrics** — marts aggregate over the loaded block window, not full protocol history. No time-series grain yet (`event_timestamp` is in staging only).
+- **Metabase uint256 charts** — use `normalized_assets` or `amount_usd`, not raw `assets`.
+- **Row counts differ by event type** — supply ≠ borrow ≠ repay ≠ withdraw in the same window.
 
-## Roadmap
+---
 
-- aggregate supply, borrow, repay, and withdraw metrics per market
-- compute utilization ratios, concentration, and risk indicators
-- protocol metrics: total borrow/supply volume, active borrowers/suppliers, volume by asset/market
-- support additional chains beyond Ethereum
-- add scheduled ingestion, incremental block range processing, and resume support
+## Completed scope
 
-## Notes
+- [x] Multi-chain extraction · market/token resolution · USD pricing
+- [x] Enrichment · validation · PostgreSQL warehouse
+- [x] dbt staging, facts, risk, Metabase marts
+- [x] Prefect orchestration (9 tasks)
+- [x] Metabase local exploration + doc screenshots · FastAPI API
 
-This repository is a modular analytics pipeline for Morpho Blue: chain configuration, contract loading, event extraction, dimension resolution, enrichment, validation, and CSV export are kept in separate layers with `main.py` as the single orchestration entry point.
+See [docs/morpho_blue_pipeline.md](docs/morpho_blue_pipeline.md) for screenshots, architecture, SQL reference, and sample outputs.
+
+---
+
+## Optional future work
+
+- Incremental block processing · time-series marts · Prefect deployments

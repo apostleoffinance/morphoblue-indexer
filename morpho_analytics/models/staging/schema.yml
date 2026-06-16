@@ -1,0 +1,72 @@
+version: 2
+
+models:
+  - name: stg_supply_events
+    description: Cleaned and normalized Morpho Blue supply events.
+    columns:
+      - name: chain
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['ethereum', 'base', 'arbitrum']
+      - name: market_id
+        tests:
+          - not_null
+      - name: wallet_address
+        tests:
+          - not_null
+      - name: event_timestamp
+        tests:
+          - not_null
+      - name: amount_normalized
+        tests:
+          - not_null
+
+  - name: stg_borrow_events
+    description: Cleaned and normalized Morpho Blue borrow events.
+    columns:
+      - name: chain
+        tests:
+          - not_null
+      - name: market_id
+        tests:
+          - not_null
+      - name: wallet_address
+        tests:
+          - not_null
+      - name: event_timestamp
+        tests:
+          - not_null
+
+  - name: stg_repay_events
+    description: Cleaned and normalized Morpho Blue repay events.
+    columns:
+      - name: chain
+        tests:
+          - not_null
+      - name: market_id
+        tests:
+          - not_null
+      - name: wallet_address
+        tests:
+          - not_null
+      - name: event_timestamp
+        tests:
+          - not_null
+
+  - name: stg_withdraw_events
+    description: Cleaned and normalized Morpho Blue withdraw events.
+    columns:
+      - name: chain
+        tests:
+          - not_null
+      - name: market_id
+        tests:
+          - not_null
+      - name: wallet_address
+        tests:
+          - not_null
+      - name: event_timestamp
+        tests:
+          - not_null

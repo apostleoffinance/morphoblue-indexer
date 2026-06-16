@@ -1,0 +1,35 @@
+services:
+
+  postgres:
+    image: postgres:17
+    container_name: morpho-postgres
+    environment:
+      POSTGRES_USER: morpho
+      POSTGRES_PASSWORD: morpho
+      POSTGRES_DB: morpho
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U morpho -d morpho"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  metabase:
+    image: metabase/metabase
+    container_name: morpho-metabase
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MB_DB_FILE: /metabase-data/metabase.db
+    volumes:
+      - metabase_data:/metabase-data
+
+volumes:
+  postgres_data:
+  metabase_data:

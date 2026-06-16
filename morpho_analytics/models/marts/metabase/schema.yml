@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: mart_supply_activity
+    description: Total supply volume aggregated by loan asset (Metabase bar charts).
+    columns:
+      - name: loan_symbol
+        tests: [not_null]
+      - name: total_supply
+        tests: [not_null]
+
+  - name: mart_borrow_activity
+    description: Total borrow volume aggregated by loan asset (Metabase bar charts).
+    columns:
+      - name: loan_symbol
+        tests: [not_null]
+      - name: total_borrow
+        tests: [not_null]
+
+  - name: mart_supplier_totals
+    description: Lifetime supply totals per wallet (Metabase top-suppliers table).
+    columns:
+      - name: supplier
+        tests: [not_null]
+
+  - name: mart_borrower_totals
+    description: Lifetime borrow totals per wallet (Metabase top-borrowers table).
+    columns:
+      - name: borrower
+        tests: [not_null]

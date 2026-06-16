@@ -10,6 +10,26 @@ ALCHEMY_RPC = os.getenv("MM_ALCHEMY_URL") or os.getenv("MM_AlCHEMY_URL")
 BASE_RPC = os.getenv("BASE_RPC", "https://mainnet.base.org")
 ARBITRUM_RPC = os.getenv("ARBITRUM_RPC") or os.getenv("ARBITRUM_RPC")
 
+GECKO_API_KEY = os.getenv("GECKO_API_KEY") or os.getenv("COINGECKO_API_KEY")
+
+COINGECKO_PLATFORM = {
+    "ethereum": "ethereum",
+    "base": "base",
+    "arbitrum": "arbitrum-one",
+}
+
+COINGECKO_ONCHAIN_NETWORK = {
+    "ethereum": "eth",
+    "base": "base",
+    "arbitrum": "arbitrum",
+}
+
+DEFILLAMA_CHAIN = {
+    "ethereum": "ethereum",
+    "base": "base",
+    "arbitrum": "arbitrum",
+}
+
 
 def _compact(*urls):
     return [u for u in urls if u]
