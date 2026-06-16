@@ -3,6 +3,7 @@ select
     chain,
     loan_symbol,
     sum(amount_normalized) as total_supply_volume,
+    sum(amount_usd) as total_supply_volume_usd,
     count(*) as supply_event_count,
     count(distinct wallet_address) as unique_suppliers
 

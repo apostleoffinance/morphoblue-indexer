@@ -30,3 +30,5 @@ models:
         +materialized: table
       risk:
         +materialized: table
+      metabase:
+        +materialized: table

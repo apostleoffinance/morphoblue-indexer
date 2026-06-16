@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Deploy secrets and generated config
+deploy/.env
+deploy/Caddyfile.active

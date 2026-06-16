@@ -27,7 +27,9 @@ cleaned as (
         loan_symbol,
         collateral_symbol,
         loan_decimals::integer as loan_decimals,
-        normalized_assets::numeric as amount_normalized
+        normalized_assets::numeric as amount_normalized,
+        price_usd::numeric as price_usd,
+        amount_usd::numeric as amount_usd
 
     from source
 

@@ -17,7 +17,7 @@ NORMALIZED_AMOUNT = Numeric(38, 18)
 # Columns that hold raw on-chain uint256 values.
 UINT256_COLUMNS = frozenset({"assets", "shares", "amounts", "lltv"})
 
-NORMALIZED_COLUMNS = frozenset({"normalized_assets"})
+NORMALIZED_COLUMNS = frozenset({"normalized_assets", "price_usd", "amount_usd"})
 
 INTEGER_COLUMNS = frozenset({
     "transaction_index",
@@ -52,6 +52,8 @@ STRING_COLUMNS = frozenset({
     "token_address",
     "symbol",
     "name",
+    "price_source",
+    "priced_at",
 })
 
 

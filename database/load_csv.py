@@ -15,7 +15,25 @@ from database.schema import (
     build_table,
     dtype_map_for_csv,
     sqlalchemy_dtypes_for_columns,
+    sqlalchemy_type_for_column,
 )
+
+
+def _sync_table_columns(table_name: str, columns: list[str]) -> None:
+    """Add any CSV columns missing from an existing Postgres table."""
+    inspector = inspect(engine)
+    if not inspector.has_table(table_name):
+        return
+
+    existing = {col["name"] for col in inspector.get_columns(table_name)}
+    missing = [col for col in columns if col not in existing]
+    if not missing:
+        return
+
+    with engine.begin() as conn:
+        for col in missing:
+            col_type = sqlalchemy_type_for_column(col).compile(dialect=engine.dialect)
+            conn.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN "{col}" {col_type}'))
 
 DEFAULT_DATA_DIR = Path("data")
 
@@ -30,6 +48,7 @@ ENRICHED_TABLES = {
 DIMENSION_TABLES = {
     "market_lookup": "market_lookup.csv",
     "token_lookup": "token_lookup.csv",
+    "token_prices": "token_prices.csv",
 }
 
 
@@ -58,6 +77,7 @@ def load_csv_to_table(csv_path: Path, table_name: str, if_exists: str = "replace
     metadata = MetaData()
     build_table(table_name, df.columns.tolist(), metadata)
     metadata.create_all(engine, tables=[metadata.tables[table_name]])
+    _sync_table_columns(table_name, df.columns.tolist())
 
     write_mode = if_exists
     if if_exists == "replace" and inspect(engine).has_table(table_name):

@@ -28,6 +28,7 @@ staging/          — cleaning, casts, lowercased addresses
 marts/dimensions/ — dim_market, dim_token
 marts/facts/      — volume aggregates, fact_market_activity
 marts/risk/       — concentration, credit, liquidity risk
+marts/metabase/   — dashboard-ready aggregates (mart_supply_activity, etc.)
 ```
 
 ## Key marts for Morpho Blue Len
@@ -38,6 +39,10 @@ marts/risk/       — concentration, credit, liquidity risk
 | `fact_concentration_risk` | Supplier concentration metrics |
 | `fact_credit_risk` | Borrow vs repay / outstanding borrow |
 | `fact_liquidity_risk` | Supply vs withdraw / net liquidity |
+| `mart_supply_activity` | Total supply by asset (Metabase) |
+| `mart_borrow_activity` | Total borrow by asset (Metabase) |
+| `mart_supplier_totals` | Per-wallet supply totals (Metabase) |
+| `mart_borrower_totals` | Per-wallet borrow totals (Metabase) |
 
 ## DAG overview
 

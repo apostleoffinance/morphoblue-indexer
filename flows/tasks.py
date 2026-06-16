@@ -60,6 +60,12 @@ def resolve_tokens(chains: list[str]) -> None:
     _run(cmd)
 
 
+@task(name="Resolve Token Prices", log_prints=True, retries=2, retry_delay_seconds=30)
+def resolve_prices(chains: list[str]) -> None:
+    cmd = [PYTHON, "main.py", "--event", "price", "--chain", *chains]
+    _run(cmd)
+
+
 @task(name="Enrich Events", log_prints=True)
 def enrich_events() -> None:
     for filename in EVENT_FILES:

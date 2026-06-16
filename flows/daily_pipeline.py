@@ -22,6 +22,7 @@ from flows.tasks import (
     extract_events,
     load_csv_to_postgres,
     resolve_markets,
+    resolve_prices,
     resolve_tokens,
     run_dbt,
     test_dbt,
@@ -89,6 +90,8 @@ def daily_pipeline(
         resolve_markets(chains)
         print("Running resolve_tokens")
         resolve_tokens(chains)
+        print("Running resolve_prices")
+        resolve_prices(chains)
         print("Running enrich_events")
         enrich_events()
         print("Running validate_pipeline")

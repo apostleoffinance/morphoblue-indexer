@@ -7,6 +7,7 @@ from config import CHAINS
 from extractors.borrow import fetch_borrow_events, transform_borrow_events
 from extractors.enrich import enrich_events
 from extractors.market_lookup import extract_market_ids, resolve_markets
+from extractors.price_lookup import resolve_token_prices
 from extractors.repay import fetch_repay_events, transform_repay_events
 from extractors.supply import fetch_supply_events, transform_supply_events
 from extractors.token_lookup import extract_token_addresses, resolve_tokens
@@ -161,7 +162,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--event",
-        choices=["supply", "borrow", "repay", "withdraw", "market", "token", "enrich", "validate", "all"],
+        choices=["supply", "borrow", "repay", "withdraw", "market", "token", "price", "enrich", "validate", "all"],
         default="supply",
         help="Which extractor to run",
     )
@@ -172,7 +173,7 @@ def main() -> None:
     chains = parse_chains(args.chain, parser)
     data_dir = data_dir_from_output(args.output)
 
-    needs_blocks = args.event not in {"market", "token", "enrich", "validate"}
+    needs_blocks = args.event not in {"market", "token", "price", "enrich", "validate"}
     block_ranges: dict[str, tuple[int, int]] = {}
     if args.block_range:
         block_ranges = parse_block_ranges(
@@ -258,6 +259,17 @@ def main() -> None:
         out = args.output or os.path.join(data_dir, "token_lookup.csv")
         write_csv(df, out, chains_updated=chains)
 
+    elif args.event == "price":
+        token_input = args.input or os.path.join(data_dir, "token_lookup.csv")
+        if not os.path.exists(token_input):
+            raise SystemExit(f"Token lookup not found: {token_input}. Run --event token first.")
+
+        tokens_df = pd.read_csv(token_input)
+        rows = resolve_token_prices(tokens_df.to_dict("records"), chains=chains)
+        df = pd.DataFrame(rows)
+        out = args.output or os.path.join(data_dir, "token_prices.csv")
+        write_csv(df, out, chains_updated=chains)
+
     elif args.event == "enrich":
         if not args.input:
             parser.error("--input is required for --event enrich (e.g. data/supply_events.csv)")
@@ -265,15 +277,24 @@ def main() -> None:
         events_df = pd.read_csv(args.input)
         markets_path = os.path.join(data_dir, "market_lookup.csv")
         tokens_path = os.path.join(data_dir, "token_lookup.csv")
+        prices_path = os.path.join(data_dir, "token_prices.csv")
         markets_df = pd.read_csv(markets_path)
         tokens_df = pd.read_csv(tokens_path)
         if "decimals" in tokens_df.columns:
             tokens_df["decimals"] = tokens_df["decimals"].astype("Int64")
 
+        price_rows: list[dict] = []
+        if os.path.exists(prices_path):
+            prices_df = pd.read_csv(prices_path)
+            price_rows = prices_df.to_dict("records")
+        else:
+            print(f"Warning: {prices_path} not found — amount_usd will be null. Run --event price first.")
+
         rows = enrich_events(
             events_df.to_dict("records"),
             markets_df.to_dict("records"),
             tokens_df.to_dict("records"),
+            price_rows,
         )
         df = pd.DataFrame(rows)
         if "loan_decimals" in df.columns:

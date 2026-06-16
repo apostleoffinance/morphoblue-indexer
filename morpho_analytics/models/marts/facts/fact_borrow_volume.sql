@@ -3,6 +3,7 @@ select
     chain,
     loan_symbol,
     sum(amount_normalized) as total_borrow_volume,
+    sum(amount_usd) as total_borrow_volume_usd,
     count(*) as borrow_event_count,
     count(distinct wallet_address) as unique_borrowers
 

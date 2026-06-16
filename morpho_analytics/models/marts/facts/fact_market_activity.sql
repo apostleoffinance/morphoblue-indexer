@@ -48,8 +48,14 @@ select
     coalesce(borrow.total_borrow_volume, 0) as total_borrow_volume,
     coalesce(repay.total_repay_volume, 0) as total_repay_volume,
     coalesce(withdraw.total_withdraw_volume, 0) as total_withdraw_volume,
+    coalesce(supply.total_supply_volume_usd, 0) as total_supply_volume_usd,
+    coalesce(borrow.total_borrow_volume_usd, 0) as total_borrow_volume_usd,
+    coalesce(repay.total_repay_volume_usd, 0) as total_repay_volume_usd,
+    coalesce(withdraw.total_withdraw_volume_usd, 0) as total_withdraw_volume_usd,
     coalesce(supply.total_supply_volume, 0) - coalesce(withdraw.total_withdraw_volume, 0) as net_liquidity_flow,
-    coalesce(borrow.total_borrow_volume, 0) - coalesce(repay.total_repay_volume, 0) as outstanding_borrow
+    coalesce(borrow.total_borrow_volume, 0) - coalesce(repay.total_repay_volume, 0) as outstanding_borrow,
+    coalesce(supply.total_supply_volume_usd, 0) - coalesce(withdraw.total_withdraw_volume_usd, 0) as net_liquidity_flow_usd,
+    coalesce(borrow.total_borrow_volume_usd, 0) - coalesce(repay.total_repay_volume_usd, 0) as outstanding_borrow_usd
 
 from market_keys
 left join supply
