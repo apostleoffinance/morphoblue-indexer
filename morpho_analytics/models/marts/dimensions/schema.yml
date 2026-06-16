@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: dim_market
+    description: One row per Morpho Blue market with loan and collateral token metadata.
+    columns:
+      - name: market_id
+        description: Unique market identifier (bytes32 hash).
+        tests:
+          - not_null
+      - name: chain
+        description: Blockchain network.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['ethereum', 'base', 'arbitrum']
+      - name: loan_token
+        tests:
+          - not_null
+      - name: collateral_token
+        tests:
+          - not_null
+      - name: loan_symbol
+      - name: collateral_symbol
+      - name: loan_decimals
+      - name: lltv
+        description: Liquidation loan-to-value threshold (on-chain uint256).
+
+  - name: dim_token
+    description: One row per ERC20 token referenced by Morpho markets.
+    columns:
+      - name: token_address
+        tests:
+          - not_null
+      - name: chain
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['ethereum', 'base', 'arbitrum']
+      - name: symbol
+      - name: name
+      - name: decimals

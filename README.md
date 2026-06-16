@@ -77,6 +77,8 @@ Validation
 - `extractors/validate.py` — checks block ranges, market coverage, and enriched parity
 - `abi/morpho_blue.json` — Morpho Blue contract ABI
 - `abi/erc20.json` — minimal ERC20 ABI (`symbol`, `name`, `decimals`)
+- `database/` — PostgreSQL load layer (`schema.py`, `load_csv.py`)
+- `morpho_analytics/` — dbt project for Morpho Blue Len analytics marts
 - `data/` — generated output CSV files
 
 ## Setup
@@ -215,6 +217,44 @@ python main.py --event validate --chain ethereum --from-block 22800000 --to-bloc
 
 Exits with code `1` on failure.
 
+## PostgreSQL warehouse
+
+Start Postgres and load enriched CSVs:
+
+```bash
+docker compose up -d
+python -m database.load_csv
+```
+
+On-chain integer columns (`assets`, `shares`, `amounts`, `lltv`) use PostgreSQL `NUMERIC(78, 0)` — not `BIGINT` — because uint256 values exceed bigint max.
+
+| Module | Role |
+|--------|------|
+| `database/schema.py` | Column type definitions (uint256 → NUMERIC) |
+| `database/load_csv.py` | Read CSVs as strings, write with explicit types |
+| `database/connection.py` | SQLAlchemy engine |
+
+## dbt analytics (Morpho Blue Len)
+
+After loading CSVs into Postgres, build marts:
+
+```bash
+cd morpho_analytics
+DBT_PROFILES_DIR=. dbt run
+DBT_PROFILES_DIR=. dbt test
+```
+
+Layer structure:
+
+```text
+staging/           → cleaned events (views)
+marts/dimensions/  → dim_market, dim_token
+marts/facts/       → volume aggregates, fact_market_activity
+marts/risk/        → concentration, credit, liquidity risk
+```
+
+See `morpho_analytics/README.md` for the full DAG.
+
 ## Default outputs
 
 | Step | Output |
@@ -259,11 +299,10 @@ FROM supply_events_enriched;
 
 ## Roadmap
 
-- aggregate supply, borrow, repay, and withdraw metrics per market
-- compute utilization ratios, concentration, and risk indicators
-- protocol metrics: total borrow/supply volume, active borrowers/suppliers, volume by asset/market
-- support additional chains beyond Ethereum
-- add scheduled ingestion, incremental block range processing, and resume support
+- Phase 12: Morpho Blue Len dashboard and API on top of dbt marts
+- incremental block range processing and resume support
+- scheduled ingestion
+- additional chains and oracle price feeds for USD-denominated risk metrics
 
 ## Notes
 

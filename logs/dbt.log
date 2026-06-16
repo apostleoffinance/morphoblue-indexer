@@ -1,0 +1,31 @@
+[0m17:21:37.962805 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x111b4b440>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x111cb30e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x111cb2c30>]}
+
+
+============================== 17:21:37.991638 | 6e23f9fa-e284-4b90-abd9-e7f1249cda6a ==============================
+[0m17:21:37.991638 [info ] [MainThread]: Running with dbt=1.11.11
+[0m17:21:37.992019 [debug] [MainThread]: running dbt with arguments {'quiet': 'False', 'static_parser': 'True', 'no_print': 'None', 'log_cache_events': 'False', 'debug': 'False', 'write_json': 'True', 'fail_fast': 'False', 'profiles_dir': '/Users/olaoluwatunmise/.dbt', 'empty': 'None', 'invocation_command': 'dbt init morpho_analytics', 'target_path': 'None', 'log_path': 'logs', 'version_check': 'True', 'use_colors': 'True', 'partial_parse': 'True', 'introspect': 'True', 'send_anonymous_usage_stats': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'log_format': 'default', 'use_experimental_parser': 'False', 'warn_error': 'None', 'indirect_selection': 'eager', 'printer_width': '80', 'cache_selected_only': 'False'}
+[0m17:21:38.038585 [info ] [MainThread]: Creating dbt configuration folder at /Users/olaoluwatunmise/.dbt
+[0m17:21:38.040355 [debug] [MainThread]: Starter project path: /Users/olaoluwatunmise/decoded_logs/.venv/lib/python3.12/site-packages/dbt/include/starter_project
+[0m17:21:38.045427 [info ] [MainThread]: 
+Your new dbt project "morpho_analytics" was created!
+
+For more information on how to configure the profiles.yml file,
+please consult the dbt documentation here:
+
+  https://docs.getdbt.com/docs/configure-your-profile
+
+One more thing:
+
+Need help? Don't hesitate to reach out to us via GitHub issues or on Slack:
+
+  https://community.getdbt.com/
+
+Happy modeling!
+
+[0m17:21:38.045712 [info ] [MainThread]: Setting up your profile.
+[0m17:25:11.313102 [info ] [MainThread]: Profile morpho_analytics written to /Users/olaoluwatunmise/.dbt/profiles.yml using target's profile_template.yml and your supplied values. Run 'dbt debug' to validate the connection.
+[0m17:25:11.331866 [debug] [MainThread]: Resource report: {"command_name": "init", "command_success": true, "command_wall_clock_time": 213.42628, "process_in_blocks": "0", "process_kernel_time": 0.22483, "process_mem_max_rss": "134709248", "process_out_blocks": "0", "process_user_time": 0.920619}
+[0m17:25:11.332549 [debug] [MainThread]: Command `dbt init` succeeded at 17:25:11.332426 after 213.43 seconds
+[0m17:25:11.333722 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x101736d50>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x111cb30e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x111d436e0>]}
+[0m17:25:11.338435 [debug] [MainThread]: Flushing usage events
+[0m17:25:12.556483 [debug] [MainThread]: An error was encountered while trying to flush usage events

@@ -1,0 +1,103 @@
+version: 2
+
+models:
+  - name: fact_supply_volume
+    description: Aggregated supply volume and supplier counts by market.
+    columns:
+      - name: market_id
+        tests:
+          - not_null
+      - name: chain
+        tests:
+          - not_null
+      - name: loan_symbol
+        tests:
+          - not_null
+      - name: total_supply_volume
+        tests:
+          - not_null
+      - name: supply_event_count
+        tests:
+          - not_null
+      - name: unique_suppliers
+        tests:
+          - not_null
+
+  - name: fact_borrow_volume
+    description: Aggregated borrow volume and borrower counts by market.
+    columns:
+      - name: market_id
+        tests:
+          - not_null
+      - name: chain
+        tests:
+          - not_null
+      - name: loan_symbol
+        tests:
+          - not_null
+      - name: total_borrow_volume
+        tests:
+          - not_null
+
+  - name: fact_repay_volume
+    description: Aggregated repay volume and repayer counts by market.
+    columns:
+      - name: market_id
+        tests:
+          - not_null
+      - name: chain
+        tests:
+          - not_null
+      - name: loan_symbol
+        tests:
+          - not_null
+      - name: total_repay_volume
+        tests:
+          - not_null
+
+  - name: fact_withdraw_volume
+    description: Aggregated withdraw volume and withdrawer counts by market.
+    columns:
+      - name: market_id
+        tests:
+          - not_null
+      - name: chain
+        tests:
+          - not_null
+      - name: loan_symbol
+        tests:
+          - not_null
+      - name: total_withdraw_volume
+        tests:
+          - not_null
+
+  - name: fact_market_activity
+    description: Combined supply, borrow, repay, and withdraw activity by market for Morpho Blue Len analytics.
+    columns:
+      - name: market_id
+        tests:
+          - not_null
+      - name: chain
+        tests:
+          - not_null
+      - name: loan_symbol
+        tests:
+          - not_null
+      - name: total_supply_volume
+        tests:
+          - not_null
+      - name: total_borrow_volume
+        tests:
+          - not_null
+      - name: total_repay_volume
+        tests:
+          - not_null
+      - name: total_withdraw_volume
+        tests:
+          - not_null
+      - name: net_liquidity_flow
+        tests:
+          - not_null
+      - name: outstanding_borrow
+        tests:
+          - not_null

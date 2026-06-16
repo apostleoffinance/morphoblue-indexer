@@ -1,15 +1,53 @@
-Welcome to your new dbt project!
+# Morpho Blue Len Analytics
 
-### Using the starter project
+dbt project for DeFi risk and forensic analytics on Morpho Blue pipeline data.
 
-Try running the following commands:
-- dbt run
-- dbt test
+## Prerequisites
 
+1. PostgreSQL running (`docker compose up -d` from repo root)
+2. CSV data loaded (`python -m database.load_csv` from repo root)
+3. dbt profile at `../.dbt/profiles.yml`
 
-### Resources:
-- Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
-- Check out [Discourse](https://discourse.getdbt.com/) for commonly asked questions and answers
-- Join the [chat](https://community.getdbt.com/) on Slack for live discussions and support
-- Find [dbt events](https://events.getdbt.com) near you
-- Check out [the blog](https://blog.getdbt.com/) for the latest news on dbt's development and best practices
+## Commands
+
+Run from this directory:
+
+```bash
+dbt parse --profiles-dir ../.dbt
+dbt run --profiles-dir ../.dbt
+dbt test --profiles-dir ../.dbt
+```
+
+## Model layers
+
+```text
+sources (PostgreSQL public.*)
+  ↓
+staging/          — cleaning, casts, lowercased addresses
+  ↓
+marts/dimensions/ — dim_market, dim_token
+marts/facts/      — volume aggregates, fact_market_activity
+marts/risk/       — concentration, credit, liquidity risk
+```
+
+## Key marts for Morpho Blue Len
+
+| Model | Purpose |
+|-------|---------|
+| `fact_market_activity` | Combined supply/borrow/repay/withdraw per market |
+| `fact_concentration_risk` | Supplier concentration metrics |
+| `fact_credit_risk` | Borrow vs repay / outstanding borrow |
+| `fact_liquidity_risk` | Supply vs withdraw / net liquidity |
+
+## DAG overview
+
+```text
+supply_events_enriched  → stg_supply_events  → fact_supply_volume ─┐
+borrow_events_enriched  → stg_borrow_events  → fact_borrow_volume ─┼→ fact_market_activity → fact_credit_risk
+repay_events_enriched   → stg_repay_events   → fact_repay_volume  ─┤                      → fact_liquidity_risk
+withdraw_events_enriched→ stg_withdraw_events→ fact_withdraw_volume┘
+stg_supply_events → fact_concentration_risk
+
+market_lookup + token_lookup → dim_market
+token_lookup → dim_token
+```

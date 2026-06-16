@@ -1,0 +1,12 @@
+morpho_analytics:
+  outputs:
+    dev:
+      dbname: morpho
+      host: localhost
+      pass: morpho
+      port: 5433
+      schema: public
+      threads: 4
+      type: postgres
+      user: morpho
+  target: dev
